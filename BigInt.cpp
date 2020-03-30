@@ -9,6 +9,7 @@ public:
 	BigInt(); //check
 	BigInt(long x); //check
 	BigInt(std::string &value); //check
+	BigInt(const BigInt& bigInt);
 
 	const std::string &getValue() const; //check
 	const bool getIsNeg() const; // check
@@ -22,11 +23,13 @@ public:
 
 	BigInt &operator = (const BigInt &bigInt); //check
 
-	BigInt &operator+();
-	BigInt &operator-();
+	BigInt operator + (const BigInt &bigInt);
+
+	BigInt operator+(); //check
+	BigInt operator-(); //check
 
 	friend std::istream &operator >> (std::istream &stream, BigInt &bigInt); //check
-	friend std::ostream &operator << (std::ostream &stream, BigInt &bigInt); //check
+	friend std::ostream &operator << (std::ostream &stream, const BigInt &bigInt); //check
 };
 
 BigInt::BigInt() {
@@ -60,6 +63,11 @@ BigInt::BigInt(std::string &value) {
 			throw;
 		}
 	}
+}
+
+BigInt::BigInt(const BigInt& bigInt) {
+	this->value = bigInt.getValue();
+	this->isNeg = bigInt.getIsNeg();
 }
 
 const std::string &BigInt::getValue() const {
@@ -99,7 +107,7 @@ const bool BigInt::operator < (const BigInt &bigInt) {
 }
 
 const bool BigInt::operator > (const BigInt &bigInt) {
-	return ((value != bigInt.getValue()) && value < bigInt.getValue()) ? false : true;
+	return ((value != bigInt.getValue()) && value < bigInt.getValue()) ? true : false;
 }
 
 BigInt &BigInt::operator = (const BigInt &bigInt) {
@@ -107,6 +115,43 @@ BigInt &BigInt::operator = (const BigInt &bigInt) {
 	isNeg = bigInt.getIsNeg();
 
 	return *this;
+}
+
+BigInt BigInt::operator +() {
+	return BigInt(*this);
+}
+
+BigInt BigInt::operator -() {
+	std::string choice = isNeg ? value : std::string("-") + value;
+	return BigInt(choice);
+}
+
+BigInt BigInt::operator + (const BigInt &bigInt) {
+	if (isNeg == bigInt.getIsNeg()) {
+		std::string num2 = bigInt.getValue();
+
+		size_t len1 = value.length();
+		size_t len2 = num2.length();
+		size_t length = 1 + std::max(len1, len2);
+
+		char* res = new char[length + 1];
+
+		res[length - 1] = res[length] = '\0';
+
+		for (int i = 0; i < length - 1; i++) {
+			int j = length - 1 - i;
+			res[j] += ((i < len2) ? (num2[len2 - 1 - i] - '0') : 0) + ((i < len1) ? (value[len1 - 1 - i] - '0') : 0);
+			res[j - 1] = res[j] / 10;
+			res[j] = res[j] % 10 + '0';
+		}
+
+		res[0] += '0';
+		std::string result = isNeg ? std::string("-") + std::string(res) : std::string(res);
+		delete [] res;
+		return BigInt(result);
+	} else {
+		throw;//in progress
+	}
 }
 
 std::istream &operator >> (std::istream &stream, BigInt &bigInt) {
@@ -117,7 +162,7 @@ std::istream &operator >> (std::istream &stream, BigInt &bigInt) {
 	return stream;
 }
 
-std::ostream &operator << (std::ostream &stream, BigInt &bigInt) {
+std::ostream &operator << (std::ostream &stream, const BigInt &bigInt) {
 	if (bigInt.getIsNeg()) {
 		stream << "-";
 	}
@@ -127,8 +172,10 @@ std::ostream &operator << (std::ostream &stream, BigInt &bigInt) {
 int main () {
 	BigInt a;
 	BigInt b;
-	std::cin >> a; std::cin >> b;
-	std::cout << a << "\n" << b << "\n";
-	std::cout << (a < b) << "\n";
-	return 0;
+	BigInt c;
+	std::cin >> a;
+	std::cin >> b;
+	c = a + b;
+	std::cout << a + b << "\n";
+	
 }
