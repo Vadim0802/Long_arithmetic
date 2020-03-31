@@ -134,9 +134,8 @@ BigInt BigInt::operator + (const BigInt &bigInt) const {
 		size_t len2 = num2.length();
 		size_t length = 1 + std::max(len1, len2); //результат суммы равен максимальной длине одного из чисел (+ 1 из-за возможного смещения разряда)
 
-		char* res = new char[length + 1];
-
-		res[length - 1] = res[length] = '\0';
+		char* res = new char[length];
+		res[length] = '\0';
 
 		for (size_t i = 0; i < length - 1; i++) {
 			int j = length - 1 - i;
@@ -169,7 +168,7 @@ BigInt BigInt::operator - (const BigInt &bigInt) const {
 		int* b = new int[length];
 		a[0] = b[0] = 0;
 
-		char* res = new char[length + 1];
+		char* res = new char[length];
 		res[length - 1] = res[length] = '\0';
 
 		bool isNegRes = bigInt > *this;
@@ -177,15 +176,15 @@ BigInt BigInt::operator - (const BigInt &bigInt) const {
 		int sign = 2 * isNegRes - 1;
 
 		for (size_t i = 0; i < length - 1; i++) {
-			a[i] += (i < len1) ? (value[len1 - 1 - i] + '0') : 0;
-			b[i] += (i < len2) ? (value2[len2 - 1 - i] + '0') : 0;
+			a[i] += (i < len1) ? (value[len1 - i - 1] - '0') : 0;
+			b[i] += (i < len2) ? (value2[len2 - i - 1] - '0') : 0;
 
 			b[i + 1] = -isNegRes;
 			a[i + 1] = isNegRes - 1;
 
-			res[length - 1 - i] += 10 + sign * (b[i] - a[i]);
-			res[length - 1 - i -1] = res[length - 1 - i] / 10;
-			res[length - 1 - i] = res[length - 1 - i] % 10 + '0';
+			res[length - i - 1] += 10 + sign * (b[i] - a[i]);
+			res[length - i - 1 - 1] = res[length - i - 1] / 10;
+			res[length - i - 1] = res[length - i - 1] % 10 + '0';
 		}
 
 		a[length - 1] += (length - 1 < len1) * (value[0] - '0');
@@ -213,9 +212,35 @@ BigInt BigInt::operator * (const BigInt &bigInt) const {
 	size_t len2 = value2.length();
 	size_t length = len1 + len2 + 1;
 
-	bool isNesRes = isNeg ^ bigInt.getIsNeg();
+	bool isNegRes = isNeg ^ bigInt.getIsNeg();
 
-	
+	int* a = new int[length];
+	int* b = new int[length];
+	char* res = new char[length];
+	res[length] = '\0';
+
+	for (size_t i = 0; i < length; i++) {
+		a[i] = (i < len1) ? (value[len1 - 1 - i] - '0') : 0;
+		b[i] = (i < len2) ? (value2[len2 - 1 - i] - '0') : 0;
+		res[i] = 0;
+	}
+
+	for (size_t i = 0; i < len1; i++) {
+		for (size_t j = 0; j < len2; j++) {
+		    res[length - 1 - (i + j)] += a[i] * b[j];
+		    res[length - 1 - (i + j + 1)] += res[length - 1 - (i + j)] / 10;
+			res[length - 1 - (i + j)] %= 10;
+		}
+	}
+	for (size_t i = 0; i < length; i++) {
+		res[length - 1 - i] += '0';
+	}
+	std::string result = isNegRes ? std::string("-") + std::string(res) : std::string(res);
+	delete[] a;
+	delete[] b;
+	delete[] res;
+
+	return BigInt(result);
 }
 
 std::istream &operator >> (std::istream &stream, BigInt &bigInt) {
@@ -238,6 +263,8 @@ int main () {
 	BigInt b;
 	std::cin >> a;
 	std::cin >> b;
-	std::cout << a + b << "\n" << a - b << "\n";
+	std::cout << a * b << "\n";
+	//std::cout << a - b << "\n";
+	//std::cout << a * b << "\n";
 	
 }
