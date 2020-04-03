@@ -3,13 +3,13 @@
 #include <algorithm>
 
 class BigInt {
-	std::string value; // значение числа
-	bool isNeg; // флаг отрицательности
+	std::string value;
+	bool isNeg;
 
 public:
 	BigInt(); //check
 	BigInt(long x); //check
-	BigInt(std::string& value); //check
+	BigInt(const std::string& value); //check
 	BigInt(const BigInt& bigInt);
 
 	const std::string& getValue() const; //check
@@ -22,9 +22,10 @@ public:
 
 	BigInt& operator = (const BigInt& bigInt); //check
 
-	BigInt operator + (const BigInt& bigInt) const;
-	BigInt operator - (const BigInt& bigInt) const;
-	BigInt operator * (const BigInt& bigInt) const;
+	BigInt operator + (const BigInt& bigInt) const; // check
+	BigInt operator - (const BigInt& bigInt) const; // check
+	BigInt operator * (const BigInt& bigInt) const; // check
+	BigInt operator / (const BigInt& bigInt) const; // check
 
 	BigInt operator+(); //check
 	BigInt operator-() const&&; //check
@@ -43,7 +44,7 @@ BigInt::BigInt(long x) {
 	this->value = std::to_string(isNeg ? -x : x);
 }
 
-BigInt::BigInt(std::string& value) {
+BigInt::BigInt(const std::string& value) {
 	if (value.length() == 0) {
 		this->value = "0";
 		this->isNeg = false;
@@ -123,8 +124,7 @@ BigInt BigInt::operator +() {
 }
 
 BigInt BigInt::operator -() const&& {
-	std::string result = isNeg ? value : std::string("-") + value;
-	return BigInt(result);
+	return BigInt(isNeg ? value : std::string("-") + value);
 }
 
 BigInt BigInt::operator + (const BigInt& bigInt) const {
@@ -157,6 +157,8 @@ BigInt BigInt::operator + (const BigInt& bigInt) const {
 		}
 
 		std::string result = isNeg ? std::string("-") + std::string(res) : std::string(res);
+		delete[] a;
+		delete[] b;
 		delete[] res;
 		return BigInt(result);
 	}
@@ -193,7 +195,7 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 		for (size_t i = 0; i < length; i++) {
 			if (!isNegRes) {
 				if (a[i] - b[i] < 0) {
-					a[i + 1] = -1;
+					a[i + 1] += -1;
 					res[length - 1 - i] += 10 + (a[i] - b[i]);
 					res[length - 1 - i - 1] += res[length - 1 - i] / 10;
 					res[length - 1 - i] %= 10;
@@ -206,7 +208,7 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 			}
 			else {
 				if (b[i] - a[i] < 0) {
-					b[i + 1] = -1;
+					b[i + 1] += -1;
 					res[length - 1 - i] += 10 + (b[i] - a[i]);
 					res[length - 1 - i - 1] += res[length - 1 - i] / 10;
 					res[length - 1 - i] %= 10;
@@ -224,6 +226,9 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 		}
 
 		std::string result = isNegRes ? std::string("-") + std::string(res) : std::string(res);
+		delete[] a;
+		delete[] b;
+		delete[] res;
 		return BigInt(result);
 
 	}
@@ -258,19 +263,95 @@ BigInt BigInt::operator * (const BigInt& bigInt) const {
 	for (size_t i = 0; i < len1; i++) {
 		for (size_t j = 0; j < len2; j++) {
 			res[length - 1 - (i + j)] += a[i] * b[j];
-			res[length - 1 - (i + j + 1)] += res[length - 1 - (i + j)] / 10;
+			res[length - 1 - 1 - (i + j)] += res[length - 1 - (i + j)] / 10;
 			res[length - 1 - (i + j)] %= 10;
 		}
 	}
+
 	for (size_t i = 0; i < length; i++) {
 		res[length - 1 - i] += '0';
 	}
+
 	std::string result = isNegRes ? std::string("-") + std::string(res) : std::string(res);
 	delete[] a;
 	delete[] b;
 	delete[] res;
 
 	return BigInt(result);
+}
+
+BigInt BigInt::operator / (const BigInt& bigInt) const {
+	/*Итоговый алгоритм деления в столбик A / B такой(это и есть школьный алгоритм)
+		1) Выбираем из A слева столько цифр, сколько их в B.Получаем число A1.
+		2) Если А1 меньше чем B, то прибавляем в него еще одну цифру из А.
+		3) Перебором всех цифр С находим самую большую, при которой "элементарное произведение" C * B <= A1(тут хорошо действовать методом дихотомии)
+		4) Записываем цифру С в результат
+		5) Вычитаем СЛЕВА из A "элементарное произведение" C * B
+		6) Если A >= B Повторяем(1), иначе деление закончено и A - остаток от деления
+	*/
+	std::string value1 = value;
+	std::string value2 = bigInt.getValue();
+
+	if (value2 == "0") {
+		throw std::string("Division by zero!");
+	}
+
+	if (value1 == "0") {
+		return 0;
+	}
+
+	if (value1 == "1") {
+		return BigInt(bigInt.getIsNeg() ? -BigInt(*this) : *this);
+	}
+
+	size_t zeroes = 0;
+	while (value2[value2.length() - 1 - zeroes] == '0') {
+		zeroes++;
+	}
+
+	if (zeroes >= value.length()) {
+		return 0;
+	}
+
+	if (zeroes) {
+		value1 = value1.substr(0, value.length() - zeroes);
+		value2 = value2.substr(0, value2.length() - zeroes);
+	}
+
+	bool isNegRes = isNeg ^ bigInt.getIsNeg();
+
+	BigInt tmp(value2);
+	size_t divider_length = value2.length();
+	size_t length = value1.length();
+	size_t index = 0;
+	std::string div; // результат деления
+	std::string v; // подстрока, которая делится на делитель
+
+	while (BigInt(v) < tmp && index < length) {
+		v += value[index++];
+	}
+
+	do {
+		int count = 0;
+		if (BigInt(v) > tmp || BigInt(v) == tmp) {
+			BigInt mod = v;
+
+			while (mod > tmp || mod == tmp) {
+				mod = mod - tmp;
+				count++;
+			}
+
+			v = mod.getValue();
+		}
+
+		div += count + '0';
+
+		if (index <= length) {
+			v += value1[index++];
+		}
+	} while (index <= length);
+
+	return BigInt(isNegRes && div != "0" ? std::string("-") + div : div);
 }
 
 std::istream& operator >> (std::istream& stream, BigInt& bigInt) {
@@ -293,7 +374,7 @@ int main() {
 	BigInt b;
 	std::cin >> a;
 	std::cin >> b;
-	std::cout << a - b;
+	std::cout << a * b << "\n";
 	//std::cout << a - b << "\n";
 	//std::cout << a * b << "\n";
 
