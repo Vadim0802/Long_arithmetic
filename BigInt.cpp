@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <algorithm>
 
 class BigInt {
 	std::string value;
@@ -8,9 +7,8 @@ class BigInt {
 
 public:
 	BigInt(); //check
-	BigInt(long x); //check
+	BigInt(int x); //check
 	BigInt(const std::string& value); //check
-	BigInt(const BigInt& bigInt);
 
 	const std::string& getValue() const; //check
 	const bool getIsNeg() const; // check
@@ -27,8 +25,8 @@ public:
 	BigInt operator * (const BigInt& bigInt) const; // check
 	BigInt operator / (const BigInt& bigInt) const; // check
 
-	BigInt operator+(); //check
-	BigInt operator-() const&&; //check
+	BigInt operator+() const; //check
+	BigInt operator-() const; //check
 
 	friend std::istream& operator >> (std::istream& stream, BigInt& bigInt); //check
 	friend std::ostream& operator << (std::ostream& stream, const BigInt& bigInt); //check
@@ -39,7 +37,7 @@ BigInt::BigInt() {
 	this->isNeg = false;
 }
 
-BigInt::BigInt(long x) {
+BigInt::BigInt(int x) {
 	this->isNeg = x < 0 ? true : false;
 	this->value = std::to_string(isNeg ? -x : x);
 }
@@ -65,11 +63,6 @@ BigInt::BigInt(const std::string& value) {
 			throw;
 		}
 	}
-}
-
-BigInt::BigInt(const BigInt& bigInt) {
-	this->value = bigInt.getValue();
-	this->isNeg = bigInt.getIsNeg();
 }
 
 const std::string& BigInt::getValue() const {
@@ -119,11 +112,11 @@ BigInt& BigInt::operator = (const BigInt& bigInt) {
 	return *this;
 }
 
-BigInt BigInt::operator +() {
+BigInt BigInt::operator +() const {
 	return BigInt(*this);
 }
 
-BigInt BigInt::operator -() const&& {
+BigInt BigInt::operator -() const {
 	return BigInt(isNeg ? value : std::string("-") + value);
 }
 
@@ -133,7 +126,7 @@ BigInt BigInt::operator + (const BigInt& bigInt) const {
 
 		size_t len1 = value.length(); // 2
 		size_t len2 = num2.length(); // 2
-		size_t length = 1 + std::max(len1, len2); // 3 //результат суммы равен максимальной длине одного из чисел (+ 1 из-за возможного смещения разряда)
+		size_t length = (len1 < len2) ? len2 + 1 : len1 + 1; //результат суммы равен максимальной длине одного из чисел (+ 1 из-за возможного смещения разряда)
 
 		int* a = new int[length];
 		int* b = new int[length];
@@ -176,7 +169,7 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 
 		size_t len1 = value.length();
 		size_t len2 = value2.length();
-		size_t length = std::max(len1, len2);
+		size_t length = (len1 < len2 ? len2 : len1);//std::max(len1, len2);
 
 		int* a = new int[length];
 		int* b = new int[length];
@@ -281,14 +274,6 @@ BigInt BigInt::operator * (const BigInt& bigInt) const {
 }
 
 BigInt BigInt::operator / (const BigInt& bigInt) const {
-	/*Итоговый алгоритм деления в столбик A / B такой(это и есть школьный алгоритм)
-		1) Выбираем из A слева столько цифр, сколько их в B.Получаем число A1.
-		2) Если А1 меньше чем B, то прибавляем в него еще одну цифру из А.
-		3) Перебором всех цифр С находим самую большую, при которой "элементарное произведение" C * B <= A1(тут хорошо действовать методом дихотомии)
-		4) Записываем цифру С в результат
-		5) Вычитаем СЛЕВА из A "элементарное произведение" C * B
-		6) Если A >= B Повторяем(1), иначе деление закончено и A - остаток от деления
-	*/
 	std::string value1 = value;
 	std::string value2 = bigInt.getValue();
 
@@ -374,8 +359,14 @@ int main() {
 	BigInt b;
 	std::cin >> a;
 	std::cin >> b;
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << a + b << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << a - b << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
 	std::cout << a * b << "\n";
-	//std::cout << a - b << "\n";
-	//std::cout << a * b << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << a / b << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
 
 }
