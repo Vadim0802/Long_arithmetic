@@ -1,10 +1,11 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 class BigInt {
+private:
 	std::string value;
 	bool isNeg;
-
 public:
 	BigInt(); //check
 	BigInt(int x); //check
@@ -20,6 +21,7 @@ public:
 
 	BigInt& operator = (const BigInt& bigInt); //check
 
+	BigInt operator + (std::string number);
 	BigInt operator + (const BigInt& bigInt) const; // check
 	BigInt operator - (const BigInt& bigInt) const; // check
 	BigInt operator * (const BigInt& bigInt) const; // check
@@ -58,10 +60,18 @@ BigInt::BigInt(const std::string& value) {
 
 	this->value = this->value.substr(counter);
 
-	for (size_t i = 0; i < this->value.length(); i++) {
-		if (this->value[i] < '0' || this->value[i] > '9') {
-			throw;
+	try
+	{
+		for (int i = 0; i < this->value.length(); i++) {
+			if (this->value[i] < '0' || this->value[i] > '9') {
+				throw this->value[i];
+			}
 		}
+	}
+	catch (const char err)
+	{
+		std::cout << "Incorrect symbol: " << err << "\n";
+		exit(0);
 	}
 }
 
@@ -124,28 +134,28 @@ BigInt BigInt::operator + (const BigInt& bigInt) const {
 	if (isNeg == bigInt.getIsNeg()) {
 		std::string num2 = bigInt.getValue();
 
-		size_t len1 = value.length(); // 2
-		size_t len2 = num2.length(); // 2
-		size_t length = (len1 < len2) ? len2 + 1 : len1 + 1; //результат суммы равен максимальной длине одного из чисел (+ 1 из-за возможного смещения разряда)
+		int len1 = value.length(); // 2
+		int len2 = num2.length(); // 2
+		int length = (len1 < len2) ? len2 + 1 : len1 + 1; //результат суммы равен максимальной длине одного из чисел (+ 1 из-за возможного смещения разряда)
 
 		int* a = new int[length];
 		int* b = new int[length];
 		char* res = new char[length + 1];
 		res[length] = '\0';
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			a[i] = (i < len1) ? (value[len1 - 1 - i] - '0') : 0;
 			b[i] = (i < len2) ? (num2[len2 - 1 - i] - '0') : 0;
 			res[i] = 0;
 		}
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			res[length - 1 - i] += a[i] + b[i];
 			res[length - 1 - 1 - i] += res[length - 1 - i] / 10;
 			res[length - 1 - i] %= 10;
 		}
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			res[length - 1 - i] += '0';
 		}
 
@@ -167,9 +177,9 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 	if (!isNeg && !bigInt.getIsNeg()) {
 		std::string value2 = bigInt.getValue();
 
-		size_t len1 = value.length();
-		size_t len2 = value2.length();
-		size_t length = (len1 < len2 ? len2 : len1);//std::max(len1, len2);
+		int len1 = value.length();
+		int len2 = value2.length();
+		int length = (len1 < len2 ? len2 : len1);
 
 		int* a = new int[length];
 		int* b = new int[length];
@@ -179,13 +189,13 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 		char* res = new char[length + 1];
 		res[length] = '\0';
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			a[i] = (i < len1) ? (value[len1 - 1 - i] - '0') : 0;
 			b[i] = (i < len2) ? (value2[len2 - 1 - i] - '0') : 0;
 			res[i] = 0;
 		}
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			if (!isNegRes) {
 				if (a[i] - b[i] < 0) {
 					a[i + 1] += -1;
@@ -214,7 +224,7 @@ BigInt BigInt::operator - (const BigInt& bigInt) const {
 			}
 		}
 
-		for (size_t i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			res[length - 1 - i] += '0';
 		}
 
@@ -236,9 +246,9 @@ BigInt BigInt::operator * (const BigInt& bigInt) const {
 	}
 	std::string value2 = bigInt.getValue();
 
-	size_t len1 = value.length(); // 2
-	size_t len2 = value2.length(); // 2
-	size_t length = len1 + len2 + 1; // 5
+	int len1 = value.length(); // 2
+	int len2 = value2.length(); // 2
+	int length = len1 + len2 + 1; // 5
 
 	bool isNegRes = isNeg ^ bigInt.getIsNeg();
 
@@ -247,21 +257,21 @@ BigInt BigInt::operator * (const BigInt& bigInt) const {
 	char* res = new char[length + 1];
 	res[length] = '\0';
 
-	for (size_t i = 0; i < length; i++) {
+	for (int i = 0; i < length; i++) {
 		a[i] = (i < len1) ? (value[len1 - 1 - i] - '0') : 0;
 		b[i] = (i < len2) ? (value2[len2 - 1 - i] - '0') : 0;
 		res[i] = 0;
 	}
 
-	for (size_t i = 0; i < len1; i++) {
-		for (size_t j = 0; j < len2; j++) {
+	for (int i = 0; i < len1; i++) {
+		for (int j = 0; j < len2; j++) {
 			res[length - 1 - (i + j)] += a[i] * b[j];
 			res[length - 1 - 1 - (i + j)] += res[length - 1 - (i + j)] / 10;
 			res[length - 1 - (i + j)] %= 10;
 		}
 	}
 
-	for (size_t i = 0; i < length; i++) {
+	for (int i = 0; i < length; i++) {
 		res[length - 1 - i] += '0';
 	}
 
@@ -276,9 +286,16 @@ BigInt BigInt::operator * (const BigInt& bigInt) const {
 BigInt BigInt::operator / (const BigInt& bigInt) const {
 	std::string value1 = value;
 	std::string value2 = bigInt.getValue();
-
-	if (value2 == "0") {
-		throw std::string("Division by zero!");
+	try
+	{
+		if (value2 == "0") {
+			throw std::exception("Division by zero!");
+		}
+	}
+	catch (const std::exception & err)
+	{
+		std::cout << err.what() << "\n";
+		exit(0);
 	}
 
 	if (value1 == "0") {
@@ -289,7 +306,7 @@ BigInt BigInt::operator / (const BigInt& bigInt) const {
 		return BigInt(bigInt.getIsNeg() ? -BigInt(*this) : *this);
 	}
 
-	size_t zeroes = 0;
+	int zeroes = 0;
 	while (value2[value2.length() - 1 - zeroes] == '0') {
 		zeroes++;
 	}
@@ -306,9 +323,9 @@ BigInt BigInt::operator / (const BigInt& bigInt) const {
 	bool isNegRes = isNeg ^ bigInt.getIsNeg();
 
 	BigInt tmp(value2);
-	size_t divider_length = value2.length();
-	size_t length = value1.length();
-	size_t index = 0;
+	int divider_length = value2.length();
+	int length = value1.length();
+	int index = 0;
 	std::string div; // результат деления
 	std::string v; // подстрока, которая делится на делитель
 
@@ -355,10 +372,27 @@ std::ostream& operator << (std::ostream& stream, const BigInt& bigInt) {
 }
 
 int main() {
+	//std::string num1;
+	//std::string num2;
+	//std::ifstream readFile("1.txt");
+	//while (!readFile.eof()) {
+	//	std::getline(readFile, num1);
+	//}
+	//std::ifstream readFile1("2.txt");
+	//while (!readFile1.eof()) {
+	//	std::getline(readFile1, num2);
+	//}
+
 	BigInt a;
 	BigInt b;
 	std::cin >> a;
 	std::cin >> b;
+
+
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
+	std::cout << "-------------------------------------------------------------------" << "\n";
 	std::cout << "-------------------------------------------------------------------" << "\n";
 	std::cout << a + b << "\n";
 	std::cout << "-------------------------------------------------------------------" << "\n";
@@ -368,5 +402,6 @@ int main() {
 	std::cout << "-------------------------------------------------------------------" << "\n";
 	std::cout << a / b << "\n";
 	std::cout << "-------------------------------------------------------------------" << "\n";
+
 
 }
